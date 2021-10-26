@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -std=c++20
+CXXFLAGS = -g -std=c++2a
 SRC = $(wildcard *.cpp)
 OBJ = $(SRC:%.cpp=%.o)
 TARGET = attack

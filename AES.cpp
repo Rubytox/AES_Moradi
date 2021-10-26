@@ -6,7 +6,7 @@ AES::AES(state128_t key): _masterKey(key)
 {
     // Build rcons
     _rcons.push_back(1);
-    for (int i = 1; i < 11; i++) {
+    for (int i = 1; i < 10; i++) {
         uint8_t latest = _rcons[i - 1];
         if (latest < 0x80)
             _rcons.push_back(2 * latest);
@@ -19,7 +19,65 @@ AES::AES(state128_t key): _masterKey(key)
 
 state128_t AES::cipher(state128_t plaintext)
 {
+    _state = plaintext;
 
+    AddRoundKey(0);
+    for (int i = 1; i < 10; i++) {
+        SubBytes();
+        ShiftRows();
+        MixColumns();
+        AddRoundKey(i);
+    }
+    SubBytes();
+    ShiftRows();
+    AddRoundKey(10);
+
+    return _state;
+}
+
+void AES::AddRoundKey(int round_num)
+{
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            _state[i][j] ^= _roundKeys[round_num][i][j];
+        }
+    }
+}
+
+void AES::SubBytes()
+{
+    for_each(_state.begin(), _state.end(), [this](array<uint8_t, 4> &column) {
+        for_each(column.begin(), column.end(), [this](uint8_t &value) {
+            value = S_BOX[value];
+        });
+    });
+}
+
+void AES::ShiftRows()
+{
+    // If _state is lines then columns we can use the shift
+    int i = 0;
+    for (auto &line : _state) {
+        Word tmp(line);
+        tmp.shiftLeft(i++);
+        line = tmp.getRawWord();
+    }
+}
+
+void AES::MixColumns()
+{
+    for (int j = 0; j < 4; j++) {
+        array<uint8_t, 4> column { 
+            _state[0][j], 
+            _state[1][j], 
+            _state[2][j], 
+            _state[3][j] 
+        };
+        _state[0][j] = 2 * column[0] + 3 * column[1] + 1 * column[2] + 1 * column[3];
+        _state[1][j] = 1 * column[0] + 2 * column[1] + 3 * column[2] + 1 * column[3];
+        _state[2][j] = 1 * column[0] + 1 * column[1] + 2 * column[2] + 3 * column[3];
+        _state[3][j] = 3 * column[0] + 1 * column[1] + 1 * column[2] + 2 * column[3];
+    }
 }
 
 Word& AES::RotWord(Word& word)

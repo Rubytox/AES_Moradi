@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <iterator>
 
 #include "Word.hpp"
 
@@ -22,7 +23,13 @@ public:
 
 private:
     // For AES-128
+    // This is lines then columns
     state128_t _state;
+
+    void AddRoundKey(int round_num);
+    void SubBytes();
+    void ShiftRows();
+    void MixColumns();
 
     state128_t _masterKey;
 
@@ -58,4 +65,5 @@ private:
     void KeySchedule();
 
     
+
 };
